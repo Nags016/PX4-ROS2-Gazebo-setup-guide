@@ -45,7 +45,7 @@ You can skip Distrobox and install everything directly on your system.
 
 Install Distrobox + Podman:
 ```bash
-sudo pacman -S distrobox podman        # For Arch / Garuda
+sudo pacman -S distrobox podman
 ```
 
 Create and enter an Ubuntu 22.04 container:
