@@ -1,0 +1,291 @@
+# Quick Start Guide
+
+Fast-track setup for PX4 Autopilot with ROS2 and Gazebo simulation environment.
+
+---
+
+## Automated Installation
+
+### Arch-based Linux (Garuda, Manjaro, EndeavourOS, Arch)
+
+```bash
+# Download and execute installation script
+wget https://raw.githubusercontent.com/Nags016/PX4-ROS2-Gazebo-setup-guide/main/install-arch.sh
+chmod +x install-arch.sh
+./install-arch.sh
+```
+
+**Installation time**: 20-30 minutes (depending on internet speed and CPU)
+
+### Debian-based Linux (Ubuntu 22.04+, Debian 11+)
+
+For Ubuntu 22.04 LTS and newer Debian-based distributions:
+
+```bash
+# Download and execute installation script
+wget https://raw.githubusercontent.com/Nags016/PX4-ROS2-Gazebo-setup-guide/main/install-debian.sh
+chmod +x install-debian.sh
+./install-debian.sh
+```
+
+---
+
+## Manual Installation (Ubuntu 22.04 Direct)
+
+If running Ubuntu 22.04 and prefer manual control:
+
+### Step 1: Install ROS2 Humble
+
+```bash
+# Add ROS2 repository
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+    -o /usr/share/keyrings/ros-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | \
+    sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+# Install ROS2
+sudo apt update
+sudo apt install -y ros-humble-desktop python3-colcon-common-extensions
+
+# Configure environment
+echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+```
+
+### Step 2: Install Gazebo Classic
+
+```bash
+# Add Gazebo repository
+sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list'
+wget https://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
+
+# Install Gazebo
+sudo apt update
+sudo apt install -y gazebo11 libgazebo11-dev libeigen3-dev libopencv-dev
+```
+
+### Step 3: Install PX4 Autopilot
+
+```bash
+# Clone PX4
+mkdir -p ~/px4_ws && cd ~/px4_ws
+git clone --recursive https://github.com/PX4/PX4-Autopilot.git
+cd PX4-Autopilot
+
+# Install dependencies and build
+bash ./Tools/setup/ubuntu.sh --no-nuttx
+make px4_sitl_default
+```
+
+### Step 4: Install QGroundControl
+
+```bash
+# Download QGroundControl
+mkdir -p ~/Applications
+cd ~/Applications
+wget https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage
+chmod +x QGroundControl.AppImage
+```
+
+---
+
+## Running the Simulation
+
+### Method 1: Single Command (After Automated Install)
+
+```bash
+~/start-px4-simulation.sh
+```
+
+### Method 2: Manual Launch
+
+Open three terminals:
+
+**Terminal 1 - PX4 SITL with Gazebo:**
+```bash
+# For Arch/Distrobox users:
+distrobox enter ubuntu-px4
+
+# All users:
+cd ~/px4_ws/PX4-Autopilot
+make px4_sitl gazebo
+```
+
+**Terminal 2 - MicroXRCE-DDS Agent (for ROS2 integration):**
+```bash
+# For Arch/Distrobox users:
+distrobox enter ubuntu-px4
+
+# All users:
+source ~/ros2_ws/install/setup.bash
+MicroXRCEAgent udp4 -p 8888
+```
+
+**Terminal 3 - QGroundControl (Host system):**
+```bash
+# Exit distrobox if inside
+exit
+
+# Run QGroundControl
+~/Applications/QGroundControl.AppImage
+```
+
+---
+
+## Verify Installation
+
+### Check ROS2 Topics
+
+```bash
+# List PX4 topics
+ros2 topic list | grep fmu
+
+# Monitor vehicle attitude
+ros2 topic echo /fmu/out/vehicle_attitude
+
+# Monitor GPS position
+ros2 topic echo /fmu/out/vehicle_gps_position
+```
+
+### Test Flight
+
+In QGroundControl:
+
+1. Wait for "Ready to Fly" status
+2. Click "Disarmed" → Slide to "Arm"
+3. Click "Takeoff" → Set altitude (e.g., 10m)
+4. Vehicle should lift off in Gazebo
+5. Click "Land" to return and disarm
+
+---
+
+## System Architecture
+
+```
+Host System
+├── QGroundControl (Ground Control Station)
+│
+└── Distrobox Container (Arch users only)
+    ├── PX4 Autopilot (Flight Controller Firmware)
+    ├── Gazebo Classic (Physics Simulator)
+    └── ROS2 Humble (Robot Operating System)
+```
+
+---
+
+## Common Commands
+
+### PX4 Management
+
+```bash
+# Build different vehicle types
+make px4_sitl gazebo_iris              # Quadcopter
+make px4_sitl gazebo_plane             # Fixed-wing
+make px4_sitl gazebo_standard_vtol     # VTOL aircraft
+
+# Build with specific world
+make px4_sitl gazebo_iris__baylands
+
+# Clean build
+make clean
+make distclean
+```
+
+### ROS2 Interaction
+
+```bash
+# List all topics
+ros2 topic list
+
+# Echo topic data
+ros2 topic echo /fmu/out/vehicle_status
+
+# Publish command
+ros2 topic pub /fmu/in/vehicle_command px4_msgs/msg/VehicleCommand "{
+  param1: 1.0,
+  command: 400
+}"
+
+# Monitor topic frequency
+ros2 topic hz /fmu/out/vehicle_attitude
+```
+
+### Gazebo Control
+
+```bash
+# Launch Gazebo only (no PX4)
+gazebo --verbose
+
+# Launch with specific world
+gazebo worlds/iris.world
+
+# Reset simulation
+# In Gazebo: Edit → Reset Model Poses
+```
+
+---
+
+## Troubleshooting Quick Fixes
+
+### Issue: Gazebo black screen
+
+```bash
+export LIBGL_ALWAYS_SOFTWARE=1
+gazebo
+```
+
+### Issue: QGroundControl not connecting
+
+```bash
+# In PX4 shell (pxh>):
+param set MAV_0_BROADCAST 1
+reboot
+```
+
+### Issue: No ROS2 topics visible
+
+```bash
+# Verify MicroXRCE-DDS agent is running
+ps aux | grep MicroXRCE
+
+# Restart agent
+MicroXRCEAgent udp4 -p 8888 -v6
+```
+
+### Issue: Build fails
+
+```bash
+# Clean and rebuild
+cd ~/px4_ws/PX4-Autopilot
+make clean
+make px4_sitl_default
+```
+
+---
+
+## Next Steps
+
+After successful setup:
+
+1. **Learn PX4 Shell Commands**: See [API Reference](README.md#api-reference)
+2. **Explore ROS2 Integration**: [Integration Configuration](README.md#integration-configuration)
+3. **Customize Simulation**: [Advanced Configuration](README.md#advanced-configuration)
+4. **Read Full Documentation**: [Complete README](README.md)
+
+---
+
+## Getting Help
+
+- **Issues**: [GitHub Issues](https://github.com/Nags016/PX4-ROS2-Gazebo-setup-guide/issues)
+- **Email**: nagarajsbhat12@gmail.com
+- **PX4 Discuss**: https://discuss.px4.io/
+- **ROS Answers**: https://answers.ros.org/
+
+---
+
+**Estimated Setup Time:**
+- Automated installation: 20-30 minutes
+- Manual installation: 30-45 minutes
+- Verification and testing: 10 minutes
+
+**Total**: ~40-55 minutes to complete working simulation environment
