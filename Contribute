@@ -1,0 +1,517 @@
+# Contributing Guidelines
+
+Thank you for your interest in improving this PX4-ROS2-Gazebo setup guide. This document outlines the contribution process and standards.
+
+---
+
+## Table of Contents
+
+- [Code of Conduct](#code-of-conduct)
+- [How to Contribute](#how-to-contribute)
+- [Reporting Issues](#reporting-issues)
+- [Suggesting Enhancements](#suggesting-enhancements)
+- [Pull Request Process](#pull-request-process)
+- [Documentation Standards](#documentation-standards)
+- [Testing Requirements](#testing-requirements)
+
+---
+
+## Code of Conduct
+
+### Our Standards
+
+This project maintains a professional environment focused on technical excellence and knowledge sharing. Contributors are expected to:
+
+- Provide constructive technical feedback
+- Focus on factual accuracy and reproducibility
+- Respect different levels of expertise
+- Acknowledge contributions from others
+- Maintain professional communication
+
+### Unacceptable Behavior
+
+- Personal attacks or derogatory language
+- Deliberate misinformation
+- Spam or off-topic discussions
+- Harassment of any kind
+
+---
+
+## How to Contribute
+
+### Areas for Contribution
+
+1. **Documentation Improvements**
+   - Clarify existing instructions
+   - Add missing steps or edge cases
+   - Improve technical accuracy
+   - Add diagrams or visual aids
+
+2. **Script Enhancements**
+   - Error handling improvements
+   - Support for additional distributions
+   - Performance optimizations
+   - Better progress reporting
+
+3. **Troubleshooting Solutions**
+   - Document new issues and solutions
+   - Verify existing solutions
+   - Add diagnostic procedures
+
+4. **Testing and Validation**
+   - Test on different Linux distributions
+   - Validate on different hardware configurations
+   - Verify compatibility with new PX4/ROS2 versions
+
+---
+
+## Reporting Issues
+
+### Before Creating an Issue
+
+Search existing issues to avoid duplicates:
+```bash
+https://github.com/Nags016/PX4-ROS2-Gazebo-setup-guide/issues
+```
+
+### Issue Template
+
+Use this template when reporting bugs:
+
+```markdown
+## Environment
+
+**Operating System:**
+- Distribution: [e.g., Garuda Linux, Ubuntu 22.04]
+- Version: [output of `cat /etc/os-release`]
+- Kernel: [output of `uname -r`]
+
+**Installation Method:**
+- [ ] Automated script (install-arch.sh / install-debian.sh)
+- [ ] Manual installation
+- [ ] Distrobox container
+- [ ] Direct Ubuntu install
+
+**Component Versions:**
+- PX4 commit/tag: [output of `git describe --tags` in PX4-Autopilot]
+- ROS2: [output of `ros2 --version`]
+- Gazebo: [output of `gazebo --version`]
+
+## Description
+
+[Clear description of the issue]
+
+## Steps to Reproduce
+
+1. [First step]
+2. [Second step]
+3. [...]
+
+## Expected Behavior
+
+[What should happen]
+
+## Actual Behavior
+
+[What actually happens]
+
+## Error Messages
+
+```
+[Paste complete error messages, including stack traces]
+```
+
+## Logs
+
+```bash
+# PX4 logs
+[Paste output from /tmp/px4.log or PX4 console]
+
+# Gazebo logs
+[Paste output from ~/.gazebo/server-*.log]
+
+# Build logs
+[Paste relevant build output]
+```
+
+## System Information
+
+```bash
+# Hardware
+CPU: [e.g., Intel i7-10750H]
+RAM: [e.g., 16 GB]
+GPU: [e.g., NVIDIA GTX 1650]
+
+# Disk space
+[Output of `df -h`]
+```
+
+## Additional Context
+
+[Any other relevant information, screenshots, etc.]
+```
+
+---
+
+## Suggesting Enhancements
+
+### Enhancement Proposal Template
+
+```markdown
+## Problem Statement
+
+[Describe the current limitation or gap]
+
+## Proposed Solution
+
+[Describe your proposed enhancement]
+
+## Technical Details
+
+[Implementation approach, if applicable]
+
+## Benefits
+
+- [Benefit 1]
+- [Benefit 2]
+
+## Potential Drawbacks
+
+[Any concerns or limitations]
+
+## Alternatives Considered
+
+[Other approaches you've evaluated]
+
+## Implementation Complexity
+
+- [ ] Low (documentation only)
+- [ ] Medium (script modifications)
+- [ ] High (significant changes)
+```
+
+---
+
+## Pull Request Process
+
+### Before Submitting
+
+1. **Test Thoroughly**
+   - Test on clean installations
+   - Verify on multiple distributions if possible
+   - Ensure existing functionality isn't broken
+
+2. **Update Documentation**
+   - Modify README.md if adding features
+   - Update TROUBLESHOOTING.md for new issues
+   - Add entries to CHANGELOG.md
+
+3. **Follow Style Guidelines**
+   - See [Documentation Standards](#documentation-standards)
+   - Maintain consistent formatting
+   - Use clear, technical language
+
+### Pull Request Template
+
+```markdown
+## Description
+
+[Brief description of changes]
+
+## Type of Change
+
+- [ ] Bug fix (non-breaking change fixing an issue)
+- [ ] New feature (non-breaking change adding functionality)
+- [ ] Breaking change (fix or feature causing existing functionality to change)
+- [ ] Documentation update
+- [ ] Performance improvement
+
+## Motivation and Context
+
+[Why is this change needed? What problem does it solve?]
+
+## Testing
+
+**Tested on:**
+- [ ] Arch Linux / Manjaro / Garuda
+- [ ] Ubuntu 22.04 LTS
+- [ ] Ubuntu 20.04 LTS
+- [ ] Debian 11+
+- [ ] Other: _______________
+
+**Test scenarios:**
+- [ ] Fresh installation
+- [ ] Upgrade from previous version
+- [ ] Multiple architecture (x86_64, arm64)
+- [ ] Different hardware configurations
+
+**Results:**
+```
+[Paste test results, outputs, or screenshots]
+```
+
+## Checklist
+
+- [ ] Code follows project style guidelines
+- [ ] Documentation updated
+- [ ] All tests pass
+- [ ] No new warnings or errors
+- [ ] Commit messages are clear and descriptive
+- [ ] Related issues referenced (e.g., "Fixes #123")
+
+## Screenshots (if applicable)
+
+[Add screenshots demonstrating the changes]
+
+## Additional Notes
+
+[Any additional information]
+```
+
+### Commit Message Guidelines
+
+Follow conventional commit format:
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Formatting (no code change)
+- `refactor`: Code refactoring
+- `test`: Adding tests
+- `chore`: Maintenance tasks
+
+**Example:**
+```
+fix(gazebo): resolve black screen on Intel integrated graphics
+
+- Add LIBGL_ALWAYS_SOFTWARE=1 environment variable
+- Update installation script to detect Intel GPU
+- Add troubleshooting entry for graphics issues
+
+Fixes #42
+```
+
+---
+
+## Documentation Standards
+
+### Markdown Formatting
+
+1. **Headers**: Use ATX-style headers (`#`, `##`, `###`)
+2. **Code Blocks**: Always specify language
+   ```bash
+   sudo apt install example
+   ```
+3. **Lists**: Use `-` for unordered, `1.` for ordered
+4. **Links**: Use descriptive text: `[PX4 Documentation](https://docs.px4.io/)`
+
+### Technical Writing Style
+
+1. **Clarity Over Brevity**
+   - Explain technical terms
+   - Provide context for commands
+   - Include expected outputs
+
+2. **Step-by-Step Instructions**
+   - Number sequential steps
+   - One action per step
+   - Explain what each step does
+
+   **Example:**
+   ```markdown
+   #### Step 1: Install Dependencies
+   
+   ```bash
+   sudo apt install -y build-essential cmake
+   ```
+   
+   **Explanation:** This installs essential build tools required for compiling PX4 from source. The `-y` flag automatically confirms installation.
+   ```
+
+3. **Command Explanations**
+   - Show the command
+   - Explain parameters
+   - Show expected output
+
+   **Example:**
+   ```markdown
+   ```bash
+   # Check PX4 version
+   git describe --tags
+   
+   # Expected output:
+   # v1.14.3-123-g4f2d8a9c
+   ```
+   ```
+
+4. **Error Handling**
+   - Anticipate common errors
+   - Provide solutions
+   - Include diagnostic commands
+
+### Code Style (Shell Scripts)
+
+```bash
+#!/bin/bash
+
+# Use strict error handling
+set -e  # Exit on error
+set -u  # Exit on undefined variable
+
+# Define constants at top
+readonly INSTALL_DIR="$HOME/px4_ws"
+readonly PX4_VERSION="v1.14.3"
+
+# Use meaningful function names
+check_system_requirements() {
+    local min_ram=8192
+    local available_ram=$(free -m | awk '/^Mem:/{print $2}')
+    
+    if [ "$available_ram" -lt "$min_ram" ]; then
+        log_error "Insufficient RAM: ${available_ram}MB < ${min_ram}MB"
+        return 1
+    fi
+    return 0
+}
+
+# Comment complex logic
+# Check if running inside Distrobox container
+if [ -f "/run/.containerenv" ]; then
+    log_info "Running inside container"
+fi
+
+# Use descriptive variable names
+px4_source_dir="$INSTALL_DIR/PX4-Autopilot"
+build_type="Release"
+```
+
+---
+
+## Testing Requirements
+
+### Minimum Testing
+
+All contributions must be tested on:
+1. **One Arch-based system** (Arch, Garuda, Manjaro, or EndeavourOS)
+2. **Ubuntu 22.04 LTS** (direct or in container)
+
+### Comprehensive Testing Checklist
+
+For significant changes:
+
+**Installation Testing:**
+- [ ] Fresh installation works without errors
+- [ ] Upgrade from previous version works
+- [ ] Uninstall/cleanup works correctly
+
+**Functional Testing:**
+- [ ] PX4 SITL builds successfully
+- [ ] Gazebo launches and displays correctly
+- [ ] ROS2 topics are visible and updating
+- [ ] QGroundControl connects successfully
+- [ ] Sample flight test completes
+
+**Documentation Testing:**
+- [ ] All commands execute without errors
+- [ ] Links are not broken
+- [ ] Code blocks have correct syntax
+- [ ] Examples produce expected outputs
+
+**Cross-platform Testing:**
+- [ ] Works on X11 and Wayland
+- [ ] Compatible with different shell (bash, zsh)
+- [ ] Handles different display managers
+
+### Test Report Format
+
+Include in pull request:
+
+```markdown
+## Test Report
+
+### Test Environment 1
+- **OS**: Garuda Linux (Arch-based)
+- **Kernel**: 6.1.21-1-lts
+- **Hardware**: Intel i7-10750H, 16GB RAM, NVIDIA GTX 1650
+- **Result**: ✓ Pass
+
+**Details:**
+- Installation time: 22 minutes
+- Build time (PX4): 9m 15s
+- All components functional
+- No errors encountered
+
+### Test Environment 2
+- **OS**: Ubuntu 22.04.3 LTS
+- **Kernel**: 5.15.0-91-generic
+- **Hardware**: AMD Ryzen 7 5800X, 32GB RAM, AMD RX 580
+- **Result**: ✓ Pass
+
+**Details:**
+- Installation time: 18 minutes
+- Build time (PX4): 7m 42s
+- Graphics issue resolved with LIBGL_ALWAYS_SOFTWARE=1
+- All tests passed
+```
+
+---
+
+## Review Process
+
+### What Reviewers Look For
+
+1. **Technical Correctness**
+   - Commands work as documented
+   - No security vulnerabilities
+   - Follows best practices
+
+2. **Completeness**
+   - All steps documented
+   - Error handling included
+   - Edge cases addressed
+
+3. **Clarity**
+   - Instructions are clear
+   - Technical terms explained
+   - Examples provided
+
+4. **Compatibility**
+   - Works on stated platforms
+   - Doesn't break existing functionality
+   - Properly handles different configurations
+
+### Review Timeline
+
+- Initial review: Within 3-5 days
+- Follow-up responses: 2-3 days
+- Final approval: After all feedback addressed
+
+---
+
+## Recognition
+
+Contributors will be:
+- Listed in AUTHORS file
+- Credited in release notes
+- Acknowledged in relevant documentation sections
+
+---
+
+## Questions or Need Help?
+
+- **Email**: nagarajsbhat12@gmail.com
+- **Issues**: https://github.com/Nags016/PX4-ROS2-Gazebo-setup-guide/issues
+- **Discussions**: https://github.com/Nags016/PX4-ROS2-Gazebo-setup-guide/discussions
+
+---
+
+Thank you for contributing to this project and helping others set up their PX4 development environments!
