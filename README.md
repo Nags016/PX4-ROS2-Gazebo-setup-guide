@@ -34,36 +34,36 @@ This repository provides comprehensive instructions for establishing a complete 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Host System                          │
-│  ┌──────────────────┐      ┌─────────────────────┐     │
-│  │ QGroundControl   │◄────►│  Display Server     │     │
-│  │   (MAVLink GCS)  │      │  (X11/Wayland)      │     │
-│  └──────────────────┘      └─────────────────────┘     │
+│  ┌──────────────────┐      ┌─────────────────────┐     `│
+│  │ QGroundControl   │◄────►│  Display Server     │      │
+│  │   (MAVLink GCS)  │      │  (X11/Wayland)      │      │
+│  └──────────────────┘      └─────────────────────┘      │
 │           ▲                                             │
 │           │ UDP 14550 (MAVLink)                         │
 │           │                                             │
-│  ┌────────┴──────────────────────────────────────────┐ │
-│  │         Distrobox Container (Ubuntu 22.04)        │ │
-│  │  ┌──────────────────────────────────────────┐    │ │
-│  │  │           PX4 Autopilot SITL             │    │ │
-│  │  │  • Flight Controller Firmware            │    │ │
-│  │  │  • MAVLink Protocol Stack                │    │ │
-│  │  │  • uORB Message Bus                      │    │ │
-│  │  └─────────┬────────────────────────────────┘    │ │
-│  │            │ TCP 4560 (Simulator Protocol)        │ │
-│  │  ┌─────────▼────────────────────────────────┐    │ │
-│  │  │         Gazebo Classic                   │    │ │
-│  │  │  • Physics Engine (ODE/Bullet)           │    │ │
-│  │  │  • Sensor Simulation                     │    │ │
-│  │  │  • 3D Rendering Pipeline                 │    │ │
-│  │  └─────────┬────────────────────────────────┘    │ │
-│  │            │                                      │ │
-│  │  ┌─────────▼────────────────────────────────┐    │ │
-│  │  │           ROS2 Humble                    │    │ │
-│  │  │  • DDS Middleware (FastDDS/CycloneDDS)   │    │ │
-│  │  │  • px4_msgs Package                      │    │ │
-│  │  │  • MicroXRCE-DDS Agent                   │    │ │
-│  │  └──────────────────────────────────────────┘    │ │
-│  └───────────────────────────────────────────────────┘ │
+│  ┌────────┴──────────────────────────────────────────┐  │
+│  │         Distrobox Container (Ubuntu 22.04)        │  │
+│  │  ┌──────────────────────────────────────────┐     │  │
+│  │  │           PX4 Autopilot SITL             │     │  │
+│  │  │  • Flight Controller Firmware            │     │  │
+│  │  │  • MAVLink Protocol Stack                │     │  │
+│  │  │  • uORB Message Bus                      │     │  │
+│  │  └─────────┬────────────────────────────────┘     │  │
+│  │            │ TCP 4560 (Simulator Protocol)        │  │
+│  │  ┌─────────▼────────────────────────────────┐     │  │
+│  │  │         Gazebo Classic                   │     │  │
+│  │  │  • Physics Engine (ODE/Bullet)           │     │  │
+│  │  │  • Sensor Simulation                     │     │  │
+│  │  │  • 3D Rendering Pipeline                 │     │  │
+│  │  └─────────┬────────────────────────────────┘     │  │
+│  │            │                                      │  │
+│  │  ┌─────────▼────────────────────────────────┐     │  │
+│  │  │           ROS2 Humble                    │     │  │
+│  │  │  • DDS Middleware (FastDDS/CycloneDDS)   │     │  │
+│  │  │  • px4_msgs Package                      │     │  │
+│  │  │  • MicroXRCE-DDS Agent                   │     │  │
+│  │  └──────────────────────────────────────────┘     │  │
+│  └───────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────┘
 ```
 
