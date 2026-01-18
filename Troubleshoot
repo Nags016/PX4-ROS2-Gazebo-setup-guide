@@ -1,0 +1,770 @@
+# Troubleshooting Guide
+
+Comprehensive solutions for common issues encountered during PX4-ROS2-Gazebo setup and operation.
+
+---
+
+## Table of Contents
+
+- [Build Issues](#build-issues)
+- [Gazebo Issues](#gazebo-issues)
+- [ROS2 Issues](#ros2-issues)
+- [PX4 Issues](#px4-issues)
+- [QGroundControl Issues](#qgroundcontrol-issues)
+- [Distrobox Issues](#distrobox-issues)
+- [Performance Issues](#performance-issues)
+- [Network and Communication](#network-and-communication)
+
+---
+
+## Build Issues
+
+### PX4 Build Fails with "Eigen/Dense: No such file or directory"
+
+**Symptoms:**
+```
+fatal error: Eigen/Dense: No such file or directory
+```
+
+**Solution:**
+```bash
+# Install Eigen3 development headers
+sudo apt install -y libeigen3-dev
+
+# Create symbolic link if error persists
+sudo ln -s /usr/include/eigen3/Eigen /usr/include/Eigen
+
+# Rebuild PX4
+cd ~/px4_ws/PX4-Autopilot
+make clean
+make px4_sitl_default
+```
+
+**Root Cause:** Missing Eigen3 library headers or incorrect include path.
+
+---
+
+### Build Fails with "fatal error: opencv2/core/core.hpp"
+
+**Symptoms:**
+```
+fatal error: opencv2/core/core.hpp: No such file or directory
+```
+
+**Solution:**
+```bash
+# Install OpenCV development libraries
+sudo apt install -y libopencv-dev
+
+# Verify installation
+pkg-config --modversion opencv4
+
+# If still failing, set OpenCV path explicitly
+export OpenCV_DIR=/usr/lib/x86_64-linux-gnu/cmake/opencv4
+
+# Rebuild
+make clean
+make px4_sitl_default
+```
+
+---
+
+### Python Module Import Errors During Build
+
+**Symptoms:**
+```
+ImportError: No module named 'jinja2'
+ImportError: No module named 'empy'
+```
+
+**Solution:**
+```bash
+# Install Python dependencies with pip
+pip3 install --user --upgrade \
+    jinja2 \
+    empy \
+    packaging \
+    pyros-genmsg \
+    toml \
+    numpy \
+    pyyaml
+
+# Verify installation
+python3 -c "import jinja2; import empy; print('OK')"
+
+# Re-run PX4 setup script
+cd ~/px4_ws/PX4-Autopilot
+bash ./Tools/setup/ubuntu.sh --no-nuttx
+```
+
+---
+
+### CMake Version Too Old
+
+**Symptoms:**
+```
+CMake 3.16 or higher is required. You are running version 3.10.2
+```
+
+**Solution (Ubuntu 20.04):**
+```bash
+# Add Kitware APT repository
+wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | \
+    gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+
+sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+sudo apt update
+
+# Install newer CMake
+sudo apt install -y cmake
+
+# Verify version
+cmake --version
+```
+
+---
+
+### Submodule Update Failures
+
+**Symptoms:**
+```
+fatal: unable to access 'https://github.com/...': Could not resolve host
+Submodule update failed
+```
+
+**Solution:**
+```bash
+# Update all submodules recursively
+cd ~/px4_ws/PX4-Autopilot
+git submodule update --init --recursive --force
+
+# If still failing, check network and try again
+git submodule foreach --recursive git reset --hard
+git submodule update --init --recursive
+```
+
+---
+
+## Gazebo Issues
+
+### Gazebo Crashes with "GLXBadFBConfig" Error
+
+**Symptoms:**
+```
+X Error: GLXBadFBConfig
+Segmentation fault (core dumped)
+```
+
+**Solution:**
+```bash
+# Force software rendering
+export LIBGL_ALWAYS_SOFTWARE=1
+export SVGA_VGPU10=0
+
+# Add to shell configuration for persistence
+echo 'export LIBGL_ALWAYS_SOFTWARE=1' >> ~/.bashrc
+source ~/.bashrc
+
+# Restart Gazebo
+gazebo
+```
+
+**Alternative for NVIDIA GPU users:**
+```bash
+# Use NVIDIA proprietary drivers
+sudo pacman -S nvidia nvidia-utils  # Arch
+sudo apt install nvidia-driver-XXX  # Ubuntu (check latest version)
+
+# Reboot system
+sudo reboot
+```
+
+---
+
+### Gazebo Window Shows Black Screen
+
+**Symptoms:**
+- Gazebo launches but viewport is completely black
+- No 3D rendering visible
+
+**Solution 1 - Update Mesa drivers:**
+```bash
+# Arch Linux
+sudo pacman -S mesa lib32-mesa vulkan-intel
+
+# Ubuntu
+sudo apt install -y mesa-utils libgl1-mesa-dri
+
+# Test OpenGL
+glxinfo | grep "OpenGL version"
+```
+
+**Solution 2 - Disable shadows:**
+```bash
+export GAZEBO_SHADOWS=0
+gazebo
+```
+
+**Solution 3 - Change rendering engine:**
+```bash
+# Edit Gazebo config
+nano ~/.gazebo/gui.ini
+
+# Find and modify:
+[rendering]
+engine=ogre
+# Change to:
+engine=ogre2
+```
+
+---
+
+### Gazebo Models Not Loading
+
+**Symptoms:**
+```
+[Err] [ModelDatabase.cc:398] Unable to connect to model database
+Model [iris] not found
+```
+
+**Solution:**
+```bash
+# Download Gazebo model database
+cd ~/
+git clone https://github.com/osrf/gazebo_models.git
+
+# Set environment variable
+export GAZEBO_MODEL_PATH=$HOME/gazebo_models:$GAZEBO_MODEL_PATH
+
+# Make permanent
+echo 'export GAZEBO_MODEL_PATH=$HOME/gazebo_models:$GAZEBO_MODEL_PATH' >> ~/.bashrc
+source ~/.bashrc
+
+# Verify
+echo $GAZEBO_MODEL_PATH
+```
+
+---
+
+### Gazebo Extremely Slow / Low FPS
+
+**Symptoms:**
+- Simulation runs at < 10 FPS
+- Physics lag or stuttering
+
+**Solution:**
+```bash
+# Reduce physics update rate
+export GAZEBO_PHYSICS_UPDATE_RATE=250  # Default: 1000
+
+# Disable real-time factor
+export GAZEBO_RTF=0
+
+# Reduce sensor update rates in model SDF files
+# Edit: ~/px4_ws/PX4-Autopilot/Tools/simulation/gazebo/sitl_gazebo/models/iris/iris.sdf
+# Modify camera/lidar update rates to 10-15 Hz
+
+# Use headless mode (no GUI)
+HEADLESS=1 make px4_sitl gazebo
+```
+
+---
+
+## ROS2 Issues
+
+### ROS2 Command Not Found
+
+**Symptoms:**
+```bash
+ros2: command not found
+```
+
+**Solution:**
+```bash
+# Source ROS2 setup
+source /opt/ros/humble/setup.bash
+
+# Verify
+echo $ROS_DISTRO  # Should output: humble
+
+# Make permanent
+echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+```
+
+---
+
+### No PX4 Topics Visible in ROS2
+
+**Symptoms:**
+```bash
+ros2 topic list
+# No /fmu/* topics appear
+```
+
+**Solution:**
+```bash
+# 1. Verify MicroXRCE-DDS agent is running
+ps aux | grep MicroXRCE
+
+# 2. If not running, start agent
+source ~/ros2_ws/install/setup.bash
+MicroXRCEAgent udp4 -p 8888 -v6
+
+# 3. Verify PX4 RTPS client is active
+# In PX4 shell (pxh>):
+microdds_client status
+# Should show: "Running"
+
+# 4. If not running, start client
+microdds_client start -t udp -p 8888
+
+# 5. Check ROS2 topics again
+ros2 topic list | grep fmu
+```
+
+---
+
+### DDS Domain ID Mismatch
+
+**Symptoms:**
+- Topics exist but no data flowing
+- Intermittent topic visibility
+
+**Solution:**
+```bash
+# Check current domain ID
+echo $ROS_DOMAIN_ID
+
+# Set to default (0)
+export ROS_DOMAIN_ID=0
+echo 'export ROS_DOMAIN_ID=0' >> ~/.bashrc
+
+# Restart all ROS2 nodes
+killall MicroXRCEAgent
+source ~/ros2_ws/install/setup.bash
+MicroXRCEAgent udp4 -p 8888
+```
+
+---
+
+### colcon build Fails
+
+**Symptoms:**
+```
+Package 'px4_msgs' not found
+CMake Error: ...
+```
+
+**Solution:**
+```bash
+# Clean build artifacts
+cd ~/ros2_ws
+rm -rf build/ install/ log/
+
+# Re-source ROS2
+source /opt/ros/humble/setup.bash
+
+# Rebuild with verbose output
+colcon build --packages-select px4_msgs --event-handlers console_direct+
+
+# Source workspace
+source install/setup.bash
+```
+
+---
+
+## PX4 Issues
+
+### PX4 SITL Fails to Start
+
+**Symptoms:**
+```
+ERROR [px4] Startup script returned an error
+Segmentation fault
+```
+
+**Solution:**
+```bash
+# Clean build
+cd ~/px4_ws/PX4-Autopilot
+make clean
+make distclean
+
+# Remove build artifacts
+rm -rf build/
+
+# Rebuild from scratch
+make px4_sitl_default
+
+# If still failing, check logs
+cat /tmp/px4.log
+```
+
+---
+
+### Sensors Not Updating
+
+**Symptoms:**
+```
+pxh> listener sensor_combined
+# No output or stale timestamps
+```
+
+**Solution:**
+```bash
+# 1. Verify Gazebo-PX4 connection
+# Check PX4 console for messages like:
+# "INFO [simulator] Simulator connected on TCP port 4560"
+
+# 2. Restart simulation with verbose output
+make px4_sitl gazebo VERBOSE=1
+
+# 3. Check port 4560 is not blocked
+sudo netstat -tulpn | grep 4560
+
+# 4. If blocked, kill blocking process
+kill -9 <PID>
+```
+
+---
+
+### GPS Not Acquiring Fix
+
+**Symptoms:**
+```
+pxh> listener vehicle_gps_position
+# fix_type: 0 (no fix)
+```
+
+**Solution:**
+```bash
+# In PX4 shell, set home position manually
+pxh> param set SIM_GPS_USED 1
+pxh> param save
+pxh> reboot
+
+# Verify GPS parameters
+pxh> param show SIM_GPS*
+
+# Wait 10-30 seconds for simulated GPS fix
+```
+
+---
+
+## QGroundControl Issues
+
+### QGC Not Detecting Vehicle
+
+**Symptoms:**
+- QGroundControl shows "No vehicle connected"
+- MAVLink traffic not visible
+
+**Solution:**
+```bash
+# 1. Enable MAVLink broadcasting in PX4
+# In PX4 shell (pxh>):
+param show MAV_0_BROADCAST
+param set MAV_0_BROADCAST 1
+param save
+reboot
+
+# 2. Check MAVLink status
+mavlink status
+# Verify UDP port 14550 is listed
+
+# 3. Verify firewall not blocking
+sudo ufw status
+sudo ufw allow 14550/udp
+sudo ufw allow 14540/udp
+
+# 4. Check QGC comm link settings
+# QGC → Application Settings → Comm Links
+# Ensure UDP connection on port 14550 exists
+```
+
+---
+
+### QGC AppImage Won't Run
+
+**Symptoms:**
+```bash
+./QGroundControl.AppImage
+# No output, application doesn't start
+```
+
+**Solution (Arch/Garuda):**
+```bash
+# Install FUSE2
+sudo pacman -S fuse2
+
+# Set executable
+chmod +x QGroundControl.AppImage
+
+# Run with verbose output
+./QGroundControl.AppImage --verbose
+```
+
+**Solution (Wayland users):**
+```bash
+# Force X11/XWayland
+QT_QPA_PLATFORM=xcb ./QGroundControl.AppImage
+```
+
+**Alternative - Extract and run:**
+```bash
+./QGroundControl.AppImage --appimage-extract
+cd squashfs-root
+./AppRun
+```
+
+---
+
+### QGC Crashes on Startup
+
+**Symptoms:**
+```
+Segmentation fault (core dumped)
+```
+
+**Solution:**
+```bash
+# Remove QGC settings
+rm -rf ~/.config/QGroundControl.org/
+rm -rf ~/.local/share/QGroundControl.org/
+
+# Delete log files
+rm -rf ~/Documents/QGroundControl/Logs/
+
+# Restart QGC
+./QGroundControl.AppImage
+```
+
+---
+
+## Distrobox Issues
+
+### Container Creation Fails
+
+**Symptoms:**
+```
+Error: creating container: ...
+```
+
+**Solution:**
+```bash
+# 1. Verify Podman/Docker is running
+systemctl --user status podman.socket
+# or
+sudo systemctl status docker
+
+# 2. Start service if stopped
+systemctl --user start podman.socket
+# or
+sudo systemctl start docker
+
+# 3. Recreate container with verbose output
+distrobox create --name ubuntu-px4 --image ubuntu:22.04 --verbose
+```
+
+---
+
+### Display Not Forwarding to Container
+
+**Symptoms:**
+- Cannot run GUI applications from container
+- "Cannot open display" errors
+
+**Solution:**
+```bash
+# Enable X11 forwarding
+xhost +local:
+
+# Recreate container with display access
+distrobox rm -f ubuntu-px4
+distrobox create --name ubuntu-px4 --image ubuntu:22.04 \
+    --additional-flags "-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix"
+
+# Enter and test
+distrobox enter ubuntu-px4
+xeyes  # Should display
+```
+
+---
+
+### Container Uses Wrong Architecture
+
+**Symptoms:**
+```
+exec /usr/bin/bash: exec format error
+```
+
+**Solution:**
+```bash
+# Explicitly specify architecture
+distrobox create --name ubuntu-px4 \
+    --image ubuntu:22.04 \
+    --additional-flags "--platform linux/amd64"
+```
+
+---
+
+## Performance Issues
+
+### High CPU Usage
+
+**Investigation:**
+```bash
+# Monitor CPU usage
+top
+
+# Check which process is consuming CPU
+# Look for: px4, gzserver, gzclient
+
+# Limit CPU cores (example: 4 cores)
+taskset -c 0-3 make px4_sitl gazebo
+```
+
+**Optimizations:**
+```bash
+# 1. Reduce Gazebo physics rate
+export GAZEBO_PHYSICS_UPDATE_RATE=250
+
+# 2. Disable Gazebo GUI
+HEADLESS=1 make px4_sitl gazebo
+
+# 3. Use release build (faster)
+make px4_sitl_default RELEASE=1
+```
+
+---
+
+### High Memory Usage
+
+**Investigation:**
+```bash
+# Monitor memory
+free -h
+htop
+
+# Check memory per process
+ps aux --sort=-%mem | head -10
+```
+
+**Solution:**
+```bash
+# 1. Limit execution history
+# In PX4 shell:
+param set SDLOG_PROFILE 0
+param save
+
+# 2. Reduce Gazebo camera resolution
+# Edit model SDF files in:
+# ~/px4_ws/PX4-Autopilot/Tools/simulation/gazebo/sitl_gazebo/models/
+
+# 3. Close unused applications
+
+# 4. Add swap space if needed
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+```
+
+---
+
+## Network and Communication
+
+### Port Already in Use
+
+**Symptoms:**
+```
+bind: Address already in use (port 14540)
+```
+
+**Solution:**
+```bash
+# Find process using port
+sudo lsof -i :14540
+
+# Kill process
+kill -9 <PID>
+
+# Restart PX4
+make px4_sitl gazebo
+```
+
+---
+
+### Firewall Blocking MAVLink
+
+**Symptoms:**
+- Intermittent QGC connection
+- Packet loss warnings
+
+**Solution (UFW - Ubuntu):**
+```bash
+# Allow MAVLink ports
+sudo ufw allow 14540/udp
+sudo ufw allow 14550/udp
+sudo ufw allow 14555/udp
+
+# Allow Gazebo
+sudo ufw allow 4560/tcp
+
+# Reload firewall
+sudo ufw reload
+```
+
+**Solution (firewalld - Fedora):**
+```bash
+sudo firewall-cmd --permanent --add-port=14540/udp
+sudo firewall-cmd --permanent --add-port=14550/udp
+sudo firewall-cmd --permanent --add-port=4560/tcp
+sudo firewall-cmd --reload
+```
+
+---
+
+## Getting Additional Help
+
+If issues persist:
+
+1. **Enable verbose logging:**
+   ```bash
+   PX4_LOG_LEVEL=debug make px4_sitl gazebo
+   ```
+
+2. **Check system logs:**
+   ```bash
+   journalctl -xe
+   dmesg | tail -50
+   ```
+
+3. **Gather diagnostic information:**
+   ```bash
+   # System info
+   uname -a
+   lsb_release -a
+   
+   # PX4 version
+   cd ~/px4_ws/PX4-Autopilot
+   git describe --tags
+   
+   # ROS2 version
+   ros2 --version
+   
+   # Gazebo version
+   gazebo --version
+   ```
+
+4. **Open GitHub issue with:**
+   - Operating system and version
+   - Complete error logs
+   - Steps to reproduce
+   - System specifications
+
+---
+
+**Last Updated:** January 2026  
+**Maintainer:** Nagaraj S Bhat (nagarajsbhat12@gmail.com)
